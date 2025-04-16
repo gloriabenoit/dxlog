@@ -1,7 +1,7 @@
 """An app to read the logs of DNAnexus jobs.
 
 Author: Gloria Benoit
-Version: 0.0.3
+Version: 0.0.4
 Date: 16/04/25
 """
 
@@ -293,6 +293,19 @@ class LogPage(Static):
             process = Popen(command, stdout=PIPE, stderr=PIPE)
             await asyncio.to_thread(process.communicate)
             progress_bar.advance(1)
+    
+    @on(Button.Pressed, "#page")
+ 
+
+    def open_page(self):
+        """Open the monitor page of the job."""
+        page_link = self.query_one(Link)
+        page = page_link.url
+        openned = self.parent.parent.parent.open_url(page, new_tab=True)
+
+        # If you cannot open the page
+        if not openned:
+            page_link.remove_class("hidden")
 
     def watch_jid(self):
         """Update page."""
@@ -306,13 +319,17 @@ class LogPage(Static):
     def compose(self):
         """Log page components."""
         with Center():
-            yield Link("placeholder", id="page_link")
+            yield Link("placeholder",
+                       id="page_link",
+                       classes="hidden")
         with Center():
             yield ProgressBar(total=10,
                               show_percentage=True,
                               show_eta=False,
                               classes="hidden")
-        yield Button("Download", id="download")
+        with HorizontalGroup(id="log_buttons"):
+            yield Button("Download", id="download")
+            yield Button("Open page", id="page")
 
 class Joblog(App):
     """A log reader for DNAnexus."""
@@ -413,6 +430,7 @@ class Joblog(App):
         log_container.add_class("hidden")
         log_page = log_container.query_one(LogPage)
         log_page.query_one(ProgressBar).add_class("hidden")
+        log_page.query_one(Link).add_class("hidden")
         log_page.query_one(Log).remove()
 
          # Show job page

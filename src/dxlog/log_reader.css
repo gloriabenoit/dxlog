@@ -18,4 +18,11 @@ Button {
 .hidden {
     display: none;
 }
-/*  */
+
+#log_buttons Button {
+    width: 50%;
+}
+
+#log_buttons {
+    align: center middle;
+}
