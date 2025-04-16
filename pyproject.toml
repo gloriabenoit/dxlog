@@ -19,9 +19,9 @@ classifiers = [
 dependencies = ["textual>=3.0.1", "dxpy>=0.388.0"]
 
 [project.urls]
-Documentation = "https://github.com/U.N. Owen/dxlog#readme"
-Issues = "https://github.com/U.N. Owen/dxlog/issues"
-Source = "https://github.com/U.N. Owen/dxlog"
+Documentation = "https://github.com/gloriabenoit/dxlog#readme"
+Issues = "https://github.com/gloriabenoit/dxlog/issues"
+Source = "https://github.com/gloriabenoit/dxlog"
 
 [project.scripts]
 dxlog = "dxlog.log_reader:run"
