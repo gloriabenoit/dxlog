@@ -1,7 +1,7 @@
 """An app to read the logs of DNAnexus jobs.
 
 Author: Gloria Benoit
-Version: 0.0.2
+Version: 0.0.3
 Date: 16/04/25
 """
 
@@ -150,13 +150,16 @@ class JobPage(Static):
                 outputs = ""
 
                 if state == "done":
+                    runtime = sep[parenthesis_info[2] + 1].strip("()")
                     if sep[sep.index('Output:')+1] != '-':
-                        runtime = sep[parenthesis_info[2] + 1].strip("()")
                         output_start = sep.index('[')
                         output_end = sep.index(']')
                         for i in range(output_start + 1, output_end):
                             outputs += sep[i]
                         outputs = outputs.split(',')
+
+                if state == "running":
+                    runtime = sep[parenthesis_info[2] + 2].strip("()")
 
                 # Color and activity
                 disabled = False
