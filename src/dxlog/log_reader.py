@@ -1,7 +1,7 @@
 """An app to read the logs of DNAnexus jobs.
 
 Author: Gloria Benoit
-Version: 0.0.4
+Version: 0.0.5
 Date: 16/04/25
 """
 
@@ -98,8 +98,9 @@ class JobPage(Static):
         if self.n_jobs_shown <= self.step:
             self.parent.query_one("#less").disabled = True
 
-    def __init__(self, *args, user: str, n_lines: int, step: int, **kwargs):
+    def __init__(self, *args, project: str, user: str, n_lines: int, step: int, **kwargs):
         super().__init__(*args, **kwargs)
+        self.project = project
         self.user = user
         self.n_lines = n_lines
         self.step = step
@@ -118,6 +119,8 @@ class JobPage(Static):
 
         # Get latest jobs
         command = ["dx", "find", "jobs", "-n", f"{self.n_jobs_total}", "--show-outputs"]
+        if self.project:
+            command += ["--project", f"{self.project}"]
         if self.user:
             command += ["--user", f"{self.user}"]
         process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -293,10 +296,8 @@ class LogPage(Static):
             process = Popen(command, stdout=PIPE, stderr=PIPE)
             await asyncio.to_thread(process.communicate)
             progress_bar.advance(1)
-    
-    @on(Button.Pressed, "#page")
- 
 
+    @on(Button.Pressed, "#page")
     def open_page(self):
         """Open the monitor page of the job."""
         page_link = self.query_one(Link)
@@ -382,8 +383,9 @@ class Joblog(App):
         log = LogDNAnexus(jid=jid)
         log_page.mount(log)
 
-    def __init__(self, *args, user: str, n_lines: int, step: int, **kwargs):
+    def __init__(self, *args, project: str, user: str, n_lines: int, step: int, **kwargs):
         super().__init__(*args, **kwargs)
+        self.project = project
         self.user = user
         self.n_lines = n_lines
         self.step = step
@@ -393,7 +395,8 @@ class Joblog(App):
         yield SearchBar(placeholder="Press Enter to submit query.",
                         classes="hidden")
         with VerticalGroup(id="job_container"):
-            yield JobPage(user=self.user,
+            yield JobPage(project=self.project,
+                          user=self.user,
                           n_lines=self.n_lines,
                           step=self.step
                           )
@@ -552,11 +555,17 @@ def run():
         prog="DNAnexus Log Reader",
         description="Read DNAnexus job logs directly from the command line."
     )
+    parser.add_argument('-p',
+                        dest="project",
+                        default="",
+                        type=str,
+                        help="show jobs from said project (default: current)"
+                        )
     parser.add_argument('-u',
                         dest="user",
                         default="",
                         type=str,
-                        help="show only jobs from said user (default: none)"
+                        help="show only jobs from said user (default: all)"
                         )
     parser.add_argument('-n',
                         dest="n_lines",
@@ -573,9 +582,9 @@ def run():
 
     # Arguments
     nargs = parser.parse_args()
-    USER, NLINES, STEP = nargs.user, nargs.n_lines, nargs.step
+    project, user, n_lines, step = nargs.project, nargs.user, nargs.n_lines, nargs.step
 
-    app = Joblog(user=USER, n_lines=NLINES, step=STEP)
+    app = Joblog(project=project, user=user, n_lines=n_lines, step=step)
     app.run()
 
 if __name__ == "__main__":

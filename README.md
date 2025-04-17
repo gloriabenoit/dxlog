@@ -31,9 +31,10 @@ The most basic way to use the app is the following, which will display the last 
 dxlog
 ```
 
-However, the app has 3 options:
+However, the app has 4 options:
 
-* `-u [str]` specifies the user of which you wish to say the jobs (default None)
+* `-p [str]` specifies the project for which you wish to say the jobs (default Current)
+* `-u [str]` specifies the user of which you wish to see the jobs (default All)
 * `-n [int]` specifies the number of jobs to display when you first open the app (default 100)
 * `-s [int]` specifies the incrementation of the number of jobs displayed (default 100)
 
@@ -44,6 +45,7 @@ Multiple features have been added to the app:
 * Show only `done`, `running` or `failed` jobs
 * Search for string in job name, user name or date
 * Download job output
+* Open the job's monitor page
 
 ## License
 
