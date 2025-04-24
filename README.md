@@ -1,6 +1,7 @@
 # dxlog - a DNAnexus log reader
 
 [![PyPI - Version](https://img.shields.io/pypi/v/dxlog.svg)](https://pypi.org/project/dxlog)
+[![Supported Python Versions](https://img.shields.io/pypi/pyversions/dxlog/0.0.1)](https://pypi.org/project/dxlog/)
 
 This app allows for the displaying of latest DNAnexus jobs in a convenient UI.
 
@@ -19,9 +20,6 @@ dx login
 ```
 
 > By default, your information expires in 30 days, but this can be changed using the `--timeout` option.
-
-If you have access to several projects on DNAnexus, you need to choose the specific one for which you wish to see the logs.
-Please use `dx select` to do so.
 
 ## Usage (from command line)
 

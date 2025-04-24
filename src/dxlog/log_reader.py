@@ -1,7 +1,7 @@
 """An app to read the logs of DNAnexus jobs.
 
 Author: Gloria Benoit
-Version: 0.0.5
+Version: 0.0.6
 Date: 16/04/25
 """
 
@@ -329,7 +329,7 @@ class LogPage(Static):
                               show_eta=False,
                               classes="hidden")
         with HorizontalGroup(id="log_buttons"):
-            yield Button("Download", id="download")
+            yield Button("Download output", id="download")
             yield Button("Open page", id="page")
 
 class Joblog(App):
@@ -372,11 +372,14 @@ class Joblog(App):
 
         # Hide download button if necessary
         log_page.outputs = press.button.outputs
-        download_button = log_page.query_one(Button)
+        download_button = log_page.query_one("#download")
+        page_button = log_page.query_one("#page")
         if log_page.outputs:
             download_button.remove_class("hidden")
+            page_button.remove_class("page-full-width")
         else:
             download_button.add_class("hidden")
+            page_button.add_class("page-full-width")
 
         # Show job log
         jid = press.button.jid

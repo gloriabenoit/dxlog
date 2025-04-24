@@ -7,13 +7,18 @@ name = "dxlog"
 dynamic = ["version"]
 description = 'A DNAnexus log reader.'
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.8.1"
 license = "MIT"
 keywords = []
 authors = [
   { name = "Gloria Benoit", email = "gloriabenoit921@gmail.com" },
 ]
 classifiers = [
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
 ]
 dependencies = ["textual>=3.0.1", "dxpy>=0.388.0"]
