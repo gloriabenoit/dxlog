@@ -1,7 +1,7 @@
 """An app to read the logs of DNAnexus jobs.
 
 Author: Gloria Benoit
-Version: 0.0.7
+Version: 0.0.8
 Date: 29/04/25
 """
 
@@ -85,20 +85,23 @@ class JobPage(Static):
     def add_jobs(self):
         """Increase the number of jobs displayed."""
         if self.n_jobs_shown + self.step > self.n_jobs_total:
-            self.query_one("#more").remove()
-            self.query_one("#less").remove()
             self.n_jobs_total *= 2
         self.n_jobs_shown += self.step
-        self.parent.query_one("#less").disabled = False
+
+        # Update utilities
+        self.check_utilities()
 
     @on(Button.Pressed, "#less")
     def remove_jobs(self):
         """Decrease the number of jobs displayed."""
-        self.parent.query_one("#more").disabled = False
         if self.n_jobs_shown > self.step:
-            self.n_jobs_shown -= self.step
-        if self.n_jobs_shown <= self.step:
-            self.parent.query_one("#less").disabled = True
+            if (self.n_jobs_max != 0) and (self.n_jobs_max < self.n_jobs_shown):
+                self.n_jobs_shown = self.n_jobs_max - self.step
+            else:
+                self.n_jobs_shown -= self.step
+
+        # Update utilities
+        self.check_utilities()
 
     def __init__(self, *args, project: str, user: str, n_lines: int, step: int, **kwargs):
         super().__init__(*args, **kwargs)
@@ -107,17 +110,25 @@ class JobPage(Static):
         self.n_lines = n_lines
         self.step = step
 
+    def compose(self):
+        """Composition of the job page."""
+        yield VerticalGroup(id="job_view")
+        with HorizontalGroup(classes="change_line"):
+            yield Button("More", id="more")
+            yield Button("Less", id="less")
+
     def on_mount(self):
-        """Update jobs on mount."""
+        """First read of jobs."""
         self.n_jobs_total = self.n_lines
         self.n_jobs_shown = self.n_lines
+        self.check_utilities()
 
     def read_job_log(self):
         """Create jobs from job log."""
-        # Remove everything
-        data = self.query()
-        if data: # If there's anything
-            data.remove()
+        # Remove existing jobs
+        jobs = self.query(Job)
+        if jobs: # If there's anything
+            jobs.remove()
 
         # Get latest jobs
         command = ["dx", "find", "jobs", "-n", f"{self.n_jobs_total}", "--show-outputs"]
@@ -129,6 +140,8 @@ class JobPage(Static):
         output, _ = process.communicate()
 
         if output:
+            job_view = self.query_one("#job_view")
+
             job_list = output.decode('utf-8').split("* ")[1:]
             if (job_list[-1]).startswith("More"):
                 job_list = job_list[:-1]
@@ -193,33 +206,23 @@ class JobPage(Static):
                                  disabled=disabled,
                                  variant=button_variant,
                                  classes="hidden")
-                self.mount(job_button)
+                job_view.mount(job_button)
 
-            # Add utilities
-            change_line = HorizontalGroup(classes="change_line")
-            button_more = Button("More", id="more")
-            button_less = Button("Less", id="less")
-
-            if self.n_jobs_total <= self.step:
-                button_less.disabled = True
             # If the max number of jobs is reached
             if len(job_list) < self.n_jobs_total:
                 self.n_jobs_max = len(job_list)
-
-            self.mount(change_line)
-            change_line.mount(button_more)
-            change_line.mount(button_less)
         else:
             sys.exit("ERROR: Invalid user.\nPlease enter a valid user name.")
 
     def show_jobs(self):
         """View jobs."""
         jobs = self.query(Job)
-        max_value = min(self.n_jobs_total, self.n_jobs_max)
+        if self.n_jobs_max != 0:
+            max_value = min(self.n_jobs_total, self.n_jobs_max)
+        else:
+            max_value = self.n_jobs_total
 
-        gap = 0
-        if len(jobs) != max_value:
-            gap = len(jobs) - max_value
+        gap = len(jobs) - max_value
         for i, job in enumerate(jobs):
             if i < self.n_jobs_shown + gap:
                 if self.show_done is True:
@@ -244,9 +247,21 @@ class JobPage(Static):
             else:
                 job.add_class("hidden")
 
+    def check_utilities(self):
+        """Check if utilities need to be disabled."""
+        # More jobs
         button_more = self.query_one("#more")
-        if (self.n_jobs_max < self.n_jobs_shown) and (self.n_jobs_max != 0):
+        if (self.n_jobs_max != 0) and (self.n_jobs_max < self.n_jobs_shown):
             button_more.disabled = True
+        else:
+            button_more.disabled = False
+
+        # Less jobs
+        button_less = self.query_one("#less")
+        if self.n_jobs_shown <= self.step:
+            button_less.disabled = True
+        else:
+            button_less.disabled = False
 
     def hide_all_jobs(self):
         """Hide all jobs shown."""
