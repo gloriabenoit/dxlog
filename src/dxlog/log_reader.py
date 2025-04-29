@@ -1,8 +1,8 @@
 """An app to read the logs of DNAnexus jobs.
 
 Author: Gloria Benoit
-Version: 0.0.6
-Date: 16/04/25
+Version: 0.0.7
+Date: 29/04/25
 """
 
 import argparse
@@ -73,6 +73,7 @@ class JobPage(Static):
 
     n_jobs_shown = reactive(0)
     n_jobs_total = reactive(0)
+    n_jobs_max = 0
 
     show_done = False
     show_running = False
@@ -93,6 +94,7 @@ class JobPage(Static):
     @on(Button.Pressed, "#less")
     def remove_jobs(self):
         """Decrease the number of jobs displayed."""
+        self.parent.query_one("#more").disabled = False
         if self.n_jobs_shown > self.step:
             self.n_jobs_shown -= self.step
         if self.n_jobs_shown <= self.step:
@@ -132,8 +134,9 @@ class JobPage(Static):
                 job_list = job_list[:-1]
 
             # For every job found
-            for i, job in enumerate(job_list):
+            for job in job_list:
                 sep = job.split()
+                cached = False
 
                 # Get positions
                 parenthesis_info = [sep.index(info) for info in sep if info.startswith('(')]
@@ -143,7 +146,8 @@ class JobPage(Static):
                 jobname = " ".join(sep[:exec_id])
                 # If the job is cached
                 if jobname.startswith('['):
-                    continue
+                    jobname = jobname.strip('[]')
+                    cached = True
                 state = sep[parenthesis_info[1]].strip("()")
                 jid = sep[parenthesis_info[1] + 1]
                 user = sep[parenthesis_info[1] + 2]
@@ -154,6 +158,8 @@ class JobPage(Static):
 
                 if state == "done":
                     runtime = sep[parenthesis_info[2] + 1].strip("()")
+                    if cached:
+                        runtime = sep[parenthesis_info[2] + 2].strip("()")
                     if sep[sep.index('Output:')+1] != '-':
                         output_start = sep.index('[')
                         output_end = sep.index(']')
@@ -193,8 +199,13 @@ class JobPage(Static):
             change_line = HorizontalGroup(classes="change_line")
             button_more = Button("More", id="more")
             button_less = Button("Less", id="less")
+
             if self.n_jobs_total <= self.step:
                 button_less.disabled = True
+            # If the max number of jobs is reached
+            if len(job_list) < self.n_jobs_total:
+                self.n_jobs_max = len(job_list)
+
             self.mount(change_line)
             change_line.mount(button_more)
             change_line.mount(button_less)
@@ -204,12 +215,12 @@ class JobPage(Static):
     def show_jobs(self):
         """View jobs."""
         jobs = self.query(Job)
+        max_value = min(self.n_jobs_total, self.n_jobs_max)
+
         gap = 0
-        if len(jobs) != self.n_jobs_total:
-            gap = len(jobs) - self.n_jobs_total
+        if len(jobs) != max_value:
+            gap = len(jobs) - max_value
         for i, job in enumerate(jobs):
-            if i < gap:
-                continue
             if i < self.n_jobs_shown + gap:
                 if self.show_done is True:
                     if job.state == "done":
@@ -232,6 +243,10 @@ class JobPage(Static):
                         job.remove_class("hidden")
             else:
                 job.add_class("hidden")
+
+        button_more = self.query_one("#more")
+        if (self.n_jobs_max < self.n_jobs_shown) and (self.n_jobs_max != 0):
+            button_more.disabled = True
 
     def hide_all_jobs(self):
         """Hide all jobs shown."""
