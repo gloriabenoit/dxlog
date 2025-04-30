@@ -1,8 +1,8 @@
 """An app to read the logs of DNAnexus jobs.
 
 Author: Gloria Benoit
-Version: 0.0.8
-Date: 29/04/25
+Version: 0.0.9
+Date: 30/04/25
 """
 
 import argparse
@@ -34,8 +34,12 @@ class SearchBar(Input):
 
     def action_blur(self) -> None:
         """Unfocus search bar."""
-        # Focus on first job viewed
-        self.parent.query(Job).first().focus()
+        # Focus on first job available
+        jobs = self.parent.query(Job)
+        for job in jobs:
+            if job.focusable:
+                job.focus()
+                break
 
     def action_submit(self):
         """When a search is submitted."""
@@ -370,7 +374,7 @@ class Joblog(App):
 
     BINDINGS = [
         ("q", "quit", "Quit"),
-        ("t", "refresh", "Toggle refresh"),
+        ("u", "update", "Update"),
         ("h", "home", "Home"),
         ("a", "show_all", "All"),
         ("d", "show_done", "Done"),
@@ -441,7 +445,7 @@ class Joblog(App):
         """An action to quit the app."""
         sys.exit()
 
-    def action_refresh(self):
+    def action_update(self):
         """Refresh page."""
         job_container = self.query_one("#job_container")
         log_container = self.query_one("#log_container")
@@ -458,6 +462,8 @@ class Joblog(App):
             current = log_page.query_one(LogDNAnexus)
             current.clear()
             current.get_current()
+
+        self.notify("Page updated")
 
     def action_home(self):
         """An action to return to the main page."""
@@ -505,6 +511,8 @@ class Joblog(App):
         job_page.hide_all_jobs()
         job_page.show_jobs()
 
+        self.check_jobs(job_type="done")
+
     def action_show_running(self):
         """Show only running/waiting jobs."""
         job_page = self.query_one(JobPage)
@@ -524,6 +532,8 @@ class Joblog(App):
         job_page.hide_all_jobs()
         job_page.show_jobs()
 
+        self.check_jobs(job_type="running")
+
     def action_show_failed(self):
         """Show only failed jobs."""
         job_page = self.query_one(JobPage)
@@ -542,6 +552,8 @@ class Joblog(App):
         # Update page
         job_page.hide_all_jobs()
         job_page.show_jobs()
+
+        self.check_jobs(job_type="failed")
 
     def action_add_jobs(self):
         """Increase the number of jobs displayed."""
@@ -581,6 +593,15 @@ class Joblog(App):
             "hidden" not in self.query_one("#log_container").classes):
             return False
         return True
+
+    def check_jobs(self, job_type=""):
+        """Check if jobs are displayed."""
+        visible_jobs = [
+            job for job in self.query(Job)
+            if not job.has_class("hidden")
+        ]
+        if not visible_jobs:
+            self.notify(f"No {job_type} jobs found.", severity="warning")
 
 def run():
     """Run the log reader application."""

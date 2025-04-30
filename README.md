@@ -5,6 +5,8 @@
 
 This app allows for the displaying of latest DNAnexus jobs in a convenient UI.
 
+![Job page preview](https://github.com/gloriabenoit/dxlog/blob/main/data/job_page.png?raw=true)
+
 ## Installation
 
 To install the package, you can run the following command.
@@ -23,7 +25,7 @@ dx login
 
 ## Usage (from command line)
 
-The most basic way to use the app is the following, which will display the last 100 jobs run on the project.
+The most basic way to use the app is the following:
 
 ```bash
 dxlog
@@ -36,14 +38,25 @@ However, the app has 4 options:
 * `-n [int]` specifies the number of jobs to display when you first open the app (default 100)
 * `-s [int]` specifies the incrementation of the number of jobs displayed (default 100)
 
+Opening *dxlog* will display the last 100 jobs run on the current project by default.
+Clicking on a job will open a new page displaying the log of the job chosen.
+
+![Log page preview](https://github.com/gloriabenoit/dxlog/blob/main/data/log_page.png?raw=true)
+
 ## Features
 
-Multiple features have been added to the app:
+### On the job page
 
+* Update the job list
 * Show only `done`, `running` or `failed` jobs
+* Show more or less jobs
 * Search for string in job name, user name or date
-* Download job output
-* Open the job's monitor page
+
+### On the log page
+
+* Update the log
+* Download the output (if it exists)
+* Open the job's monitor page (or display link if not possible)
 
 ## License
 
