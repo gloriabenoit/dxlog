@@ -1,8 +1,8 @@
 """An app to read the logs of DNAnexus jobs.
 
 Author: Gloria Benoit
-Version: 0.0.9
-Date: 30/04/25
+Version: 0.1.0
+Date: 16/05/25
 """
 
 import argparse
@@ -239,17 +239,16 @@ class JobPage(Static):
                     if job.state == "failed":
                         job.remove_class("hidden")
                 else:
-                    if self.search:
-                        if (re.search(self.search, job.jobname) or
-                            re.search(self.search, job.user) or
-                            re.search(self.search, job.date)):
-                            job.remove_class("hidden")
-                        else:
-                            job.add_class("hidden")
-                    else:
-                        job.remove_class("hidden")
+                    job.remove_class("hidden")
             else:
                 job.add_class("hidden")
+
+            if self.search:
+                if not "hidden" in job.classes:
+                    if not (re.search(self.search.lower(), job.jobname.lower()) or
+                        re.search(self.search.lower(), job.user.lower()) or
+                        re.search(self.search.lower(), job.date.lower())):
+                        job.add_class("hidden")
 
     def check_utilities(self):
         """Check if utilities need to be disabled."""
@@ -392,8 +391,7 @@ class Joblog(App):
         """Switch to the log page."""
         # Remove search bar
         search_bar = self.query_one(SearchBar)
-        if "hidden" not in search_bar.classes:
-            self.action_search_jobs()
+        search_bar.add_class("hidden")
 
         # Hide other pages
         job_container = self.query_one("#job_container")
@@ -479,6 +477,11 @@ class Joblog(App):
         self.query_one("#job_container").remove_class("hidden")
         self.refresh_bindings()
 
+        # Show search bar if existent
+        search_bar = self.query_one(SearchBar)
+        if search_bar.value:
+            search_bar.remove_class("hidden")
+
     def action_show_all(self):
         """Show only done jobs."""
         job_page = self.query_one(JobPage)
@@ -486,8 +489,8 @@ class Joblog(App):
         # Remove search
         job_page.search = ""
         search_bar = self.query_one(SearchBar)
-        if "hidden" not in search_bar.classes:
-            self.action_search_jobs()
+        search_bar.value = ""
+        search_bar.add_class("hidden")
 
         # Update page
         job_page.show_all_jobs()
@@ -500,12 +503,6 @@ class Joblog(App):
         job_page.show_done = True
         job_page.show_running = False
         job_page.show_failed = False
-
-        # Remove search
-        job_page.search = ""
-        search_bar = self.query_one(SearchBar)
-        if "hidden" not in search_bar.classes:
-            self.action_search_jobs()
 
         # Update page
         job_page.hide_all_jobs()
@@ -522,12 +519,6 @@ class Joblog(App):
         job_page.show_running = True
         job_page.show_failed = False
 
-        # Remove search
-        job_page.search = ""
-        search_bar = self.query_one(SearchBar)
-        if "hidden" not in search_bar.classes:
-            self.action_search_jobs()
-
         # Update page
         job_page.hide_all_jobs()
         job_page.show_jobs()
@@ -542,12 +533,6 @@ class Joblog(App):
         job_page.show_done = False
         job_page.show_running = False
         job_page.show_failed = True
-
-        # Remove search
-        job_page.search = ""
-        search_bar = self.query_one(SearchBar)
-        if "hidden" not in search_bar.classes:
-            self.action_search_jobs()
 
         # Update page
         job_page.hide_all_jobs()
@@ -566,15 +551,10 @@ class Joblog(App):
     def action_search_jobs(self):
         """Open/close the search bar."""
         search_bar = self.query_one(SearchBar)
-        search_bar.toggle_class("hidden")
+        search_bar.remove_class("hidden")
         if "hidden" not in search_bar.classes:
             search_bar.can_focus = True
             search_bar.focus(scroll_visible=True)
-        else:
-            search_bar.can_focus = False
-            search_bar.value = ""
-            job_page = self.query_one(JobPage)
-            job_page.search = ""
 
     def check_action(self, action: str, parameters: tuple[object, ...]):
         """Check if an action may run.
